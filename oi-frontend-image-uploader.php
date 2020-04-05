@@ -14,7 +14,7 @@ Time: 20:03
 
 namespace oifrontend\image_uploader;
 
-use function oifrontend\oifrontend;
+//use function oifrontend\oifrontend;
 
 /**
  * Function returns path to the current plugin: `/htdocs/wp-content/plugins/oi-frontend/`
@@ -38,17 +38,18 @@ function plugin_name() {
  * Filtering get_avatar_url function
  *
  * @param $args
- * @param $user_id
+ * @param $user
  *
  * @return mixed
  */
-function set_avatar_url( $args, $user_id ) {
-	global $wp_query;
-	if ( ! is_numeric( $user_id ) ) {
-		$user    = get_user_by( 'email', $user_id );
+function set_avatar_url( $args, $user ) {
+//	global $wp_query;
+	// if $user is an object
+	if ( is_object( $user ) ) {
+		$user    = get_user_by( 'email', $user->data->user_email );
 		$user_id = $user->ID;
 	}
-	if ( empty( trim( $user_id ) ) ) {
+	else {
 		$user_id = get_queried_object_id();
 	}
 	$url = get_user_meta( $user_id, 'user_photo', true );
@@ -59,7 +60,8 @@ function set_avatar_url( $args, $user_id ) {
 		if ( empty( trim( $args['url'] ) ) ) {
 			// show default image
 			$url = apply_filters( 'set_avatar_url', plugins_url() . '/' . plugin_name() . '/images/user.svg?' . $user_id, $user_id );
-		} else {
+		}
+		else {
 			$url = $args['url'];
 		}
 	}
@@ -150,7 +152,8 @@ function uploadable_image( $atts = null ) {
 	// если имя шаблона загрузки изображения указано
 	if ( ! empty( $atts['name'] ) ) {
 		$file_part = "{$atts['slug']}-{$atts['name']}.php";
-	} else {
+	}
+	else {
 		$file_part = "{$atts['slug']}";
 	}
 
@@ -197,7 +200,8 @@ function get_displayed_user_id() {
 
 	if ( get_query_var( 'pagename' ) ) {
 		$user_id = get_current_user_id();
-	} else {
+	}
+	else {
 		$user_id = get_the_author_meta( 'ID' );
 	}
 
@@ -360,7 +364,8 @@ function get_template_path( $slug, $name = null ) {
 
 	if ( ! empty( $name ) ) {
 		$file = "{$slug}-{$name}.php";
-	} else {
+	}
+	else {
 		$file = "{$slug}.php";
 	}
 
@@ -421,7 +426,8 @@ function the_template_part( $slug, $name = null, $atts = [], $default = [], $que
 	if ( ! empty( $atts ) ) {
 		if ( ! empty( $query_var ) ) {
 			set_query_var( 'template_' . $query_var . '_vars', $atts );
-		} else {
+		}
+		else {
 			extract( $atts, EXTR_SKIP );
 		}
 	}
@@ -528,7 +534,7 @@ function upload_file( $atts = [] ) {
 	$post_id = absint( $atts['post_id'] );
 
 	// типы изображений, которые хранятся в user meta
-	$user_meta = array( 'avatar', 'cover' );
+//	$user_meta = array( 'avatar', 'cover' );
 
 	// use filter to set upload dir for some types of uploadable files
 	switch ( $atts['type'] ) {
@@ -550,7 +556,8 @@ function upload_file( $atts = [] ) {
 
 			// данные загружаемого файла
 			$filedata = $_FILES['filedata'];
-		} else {
+		}
+		else {
 
 			$filedata = $_FILES[0];
 		}
@@ -569,6 +576,9 @@ function upload_file( $atts = [] ) {
 
 				// определение нового имени файла
 				$upload_overrides['unique_filename_callback'] = function ( $dir, $name, $ext ) use ( $atts, $user_id ) {
+					unset( $dir );
+					unset( $name );
+
 					return strtolower( $atts['type'] . '_' . $user_id . $ext );
 				};
 				break;
@@ -576,7 +586,8 @@ function upload_file( $atts = [] ) {
 
 		// загрузка файла
 		$filedata = wp_handle_upload( $filedata, $upload_overrides );
-	} else {
+	}
+	else {
 		// указана ссылка на файл на удаленном сервере
 
 		// загрузка файла во временную директорию
